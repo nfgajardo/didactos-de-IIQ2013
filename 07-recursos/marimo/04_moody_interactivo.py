@@ -28,31 +28,6 @@ Incluye **inputs dobles** (slider + entrada manual) para Re y ε/D.
     return
 
 
-@app.cell
-def _(mo):
-    mo.md(
-        r"""
-## Ejercicio resuelto: régimen de flujo
-
-**Enunciado**  
-¿Cuál es el régimen de flujo en una tubería de 10 in de diámetro nominal 
-\((D = 254.5\ \text{mm})\) cuando circula \(Q = 0.1\ \text{m}^3/\text{s}\) de agua?
-
-**Supuesto para agua a temperatura ambiente:**  
-\(\nu \approx 1.0\times10^{-6}\ \text{m}^2/\text{s}\)
-
-**Ecuaciones:**
-\[
-A = \frac{\pi D^2}{4},\qquad V = \frac{Q}{A},\qquad Re = \frac{VD}{\nu}
-\]
-
-Criterio:
-- Laminar: \(Re < 2300\)
-- Transición: \(2300 \le Re \le 4000\)
-- Turbulento: \(Re > 4000\)
-"""
-    )
-    return
 
 @app.cell
 def _(np):
@@ -98,58 +73,6 @@ def _(mo):
     return re_manual, re_slider, rr_manual, rr_slider, use_manual
 
 
-@app.cell
-def _(mo, np):
-    Q = 0.1
-    D = 0.2545
-    nu = 1.0e-6
-    eps = 0.046e-3   # acero comercial (m)
-    L = 100.0
-
-    A = np.pi * D**2 / 4
-    V = Q / A
-    Re_ex = V * D / nu
-    rr_ex = eps / D
-
-    if Re_ex < 2300:
-        regime = "Laminar"
-    elif Re_ex <= 4000:
-        regime = "Transición"
-    else:
-        regime = "Turbulento"
-
-    # Colebrook (Darcy) para el caso del ejercicio
-    fD = 0.25 / (np.log10(rr_ex / 3.7 + 5.74 / (Re_ex**0.9)) ** 2)
-    for _ in range(35):
-        inv = -2 * np.log10(rr_ex / 3.7 + 2.51 / (Re_ex * np.sqrt(fD)))
-        fD = 1 / (inv**2)
-
-    fF = fD / 4.0  # Fanning
-
-    # phi = 4*fF*(L/D)*(V^2/2)
-    phi = 4 * fF * (L / D) * (V**2 / 2)
-    hf = phi / 9.81
-
-    mo.md(
-        fr"""
-### Resultado del ejercicio
-
-- Área: **A = {A:.5f} m²**
-- Velocidad media: **V = {V:.3f} m/s**
-- Reynolds: **Re = {Re_ex:.2e}**
-- **Régimen: {regime}**
-
-**Segunda parte (usando Moody, acero comercial):**
-- Rugosidad relativa: **ε/D = {rr_ex:.2e}**
-- Factor de fricción de **Fanning**: **f = {fF:.4f}** (aprox.)
-- Factor de fricción de **Darcy** (referencia): **f_D = {fD:.4f}**
-- \(\phi = 4f\,(L/D)\,(V^2/2)\): **φ = {phi:.2f} m²/s²**
-- Equivalente en pérdida de carga: **h_f \approx {hf:.2f} m** (para L=100 m)
-
-Conclusión: para este caudal y diámetro, el flujo está en régimen **{regime.lower()}**.
-"""
-    )
-    return
 
 
 @app.cell
@@ -205,6 +128,130 @@ def _(f_darcy, np, plt, re_manual, re_slider, rr_manual, rr_slider, use_manual):
             color="#333333", fontsize=11)
 
     fig
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+## Ejercicio resuelto (paso a paso) — después de usar la herramienta
+
+**Enunciado**
+
+1) ¿Cuál es el régimen de flujo en una tubería de 10 in de diámetro nominal
+\(D=254.5\,\text{mm}=0.2545\,\text{m}\), con \(Q=0.1\,\text{m}^3/\text{s}\) de agua?
+
+2) Considerando tubería de acero comercial, ¿cuál es el factor de fricción de **Fanning**?
+
+3) ¿Cuál es \(\phi = 4f\,(L/D)\,(V^2/2)\) para \(L=100\,\text{m}\)?
+
+Se usa \(\nu=1.0\times 10^{-6}\,\text{m}^2/\text{s}\), \(\varepsilon=0.046\,\text{mm}\), \(g=9.81\,\text{m}/\text{s}^2\).
+"""
+    )
+    return
+
+
+@app.cell
+def _(mo, np):
+    Q = 0.1
+    D = 0.2545
+    nu = 1.0e-6
+    eps = 0.046e-3
+    L = 100.0
+    g = 9.81
+
+    # Paso 1: área y velocidad
+    A = np.pi * D**2 / 4
+    V = Q / A
+
+    # Paso 2: Reynolds
+    Re = V * D / nu
+
+    if Re < 2300:
+        regime = "Laminar"
+    elif Re <= 4000:
+        regime = "Transición"
+    else:
+        regime = "Turbulento"
+
+    # Paso 3: rugosidad relativa
+    rr = eps / D
+
+    # Paso 4: factor Darcy con Colebrook
+    fD = 0.25 / (np.log10(rr / 3.7 + 5.74 / (Re**0.9)) ** 2)
+    for _ in range(40):
+        inv = -2 * np.log10(rr / 3.7 + 2.51 / (Re * np.sqrt(fD)))
+        fD = 1 / (inv**2)
+
+    # Paso 5: Fanning
+    fF = fD / 4
+
+    # Paso 6: phi y pérdida de carga equivalente
+    phi = 4 * fF * (L / D) * (V**2 / 2)
+    hf = phi / g
+
+    mo.md(
+        fr"""
+### Resolución numérica detallada
+
+**Datos convertidos**
+- \(D = 0.2545\,\text{{m}}\)
+- \(\varepsilon = 0.046\,\text{{mm}} = 4.6\times 10^{{-5}}\,\text{{m}}\)
+- \(Q = 0.1\,\text{{m}}^3/\text{{s}}\)
+- \(\nu = 1.0\times 10^{{-6}}\,\text{{m}}^2/\text{{s}}\)
+- \(L=100\,\text{{m}}\)
+
+**Paso 1**
+\[
+A=\frac{{\pi D^2}}{{4}}=\frac{{\pi(0.2545)^2}}{{4}}={A:.5f}\,\text{{m}}^2
+\]
+\[
+V=\frac{{Q}}{{A}}=\frac{{0.1}}{{{A:.5f}}}={V:.6f}\,\text{{m/s}}
+\]
+
+**Paso 2**
+\[
+Re=\frac{{VD}}{{\nu}}=\frac{{({V:.6f})(0.2545)}}{{1.0\times10^{{-6}}}}={Re:.6e}
+\]
+Régimen: **{regime}**.
+
+**Paso 3**
+\[
+\frac{{\varepsilon}}{{D}}=\frac{{4.6\times10^{{-5}}}}{{0.2545}}={rr:.6e}
+\]
+
+**Paso 4 (Colebrook)**
+\[
+\frac{{1}}{{\sqrt{{f_D}}}}=-2\log_{{10}}\left(\frac{{\varepsilon/D}}{{3.7}}+\frac{{2.51}}{{Re\sqrt{{f_D}}}}\right)
+\]
+Resultado: **\(f_D={fD:.6f}\)**.
+
+**Paso 5 (Fanning)**
+\[
+f_F=\frac{{f_D}}{{4}}=\frac{{{fD:.6f}}}{{4}}={fF:.6f}
+\]
+
+**Paso 6 (pérdidas por fricción según enunciado)**
+\[
+\phi=4f_F\left(\frac{{L}}{{D}}\right)\left(\frac{{V^2}}{{2}}\right)
+\]
+\[
+\phi=4({fF:.6f})\left(\frac{{100}}{{0.2545}}\right)\left(\frac{{({V:.6f})^2}}{{2}}\right)={phi:.6f}\,\text{{m}}^2/\text{{s}}^2
+\]
+
+Equivalente en pérdida de carga:
+\[
+h_f=\frac{{\phi}}{{g}}=\frac{{{phi:.6f}}}{{9.81}}={hf:.6f}\,\text{{m}}
+\]
+
+### Resumen final
+- **Régimen:** {regime}
+- **f (Fanning):** {fF:.4f}
+- **\(\phi\):** {phi:.2f} m²/s²
+- **\(h_f\):** {hf:.2f} m
+"""
+    )
     return
 
 

@@ -19,6 +19,8 @@ def _(mo):
         r"""
 # 01_iterative — Diseño de ducto con Colebrook-White (iterativo)
 
+Se debe hacer fluir aire caliente a 1 atm y 35°C en un ducto circular de plástico de 150 m de largo, a una razón de 0.35 m³/s. En la parte (a), se pide determinar el diámetro mínimo del ducto para que la pérdida de carga no supere 20 m. En la parte (b), se duplica la longitud del ducto manteniendo el mismo diámetro, y se solicita calcular la caída en la razón de flujo si la pérdida de carga total debe permanecer constante.
+
 Se resolverá con iteraciones sucesivas, mostrando tablas de convergencia.
 
 ## Datos del problema

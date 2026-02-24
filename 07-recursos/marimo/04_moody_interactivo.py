@@ -29,6 +29,32 @@ Incluye **inputs dobles** (slider + entrada manual) para Re y ε/D.
 
 
 @app.cell
+def _(mo):
+    mo.md(
+        r"""
+## Ejercicio resuelto: régimen de flujo
+
+**Enunciado**  
+¿Cuál es el régimen de flujo en una tubería de 10 in de diámetro nominal 
+\((D = 254.5\ \text{mm})\) cuando circula \(Q = 0.1\ \text{m}^3/\text{s}\) de agua?
+
+**Supuesto para agua a temperatura ambiente:**  
+\(\nu \approx 1.0\times10^{-6}\ \text{m}^2/\text{s}\)
+
+**Ecuaciones:**
+\[
+A = \frac{\pi D^2}{4},\qquad V = \frac{Q}{A},\qquad Re = \frac{VD}{\nu}
+\]
+
+Criterio:
+- Laminar: \(Re < 2300\)
+- Transición: \(2300 \le Re \le 4000\)
+- Turbulento: \(Re > 4000\)
+"""
+    )
+    return
+
+@app.cell
 def _(np):
     def f_swamee_jain(Re, rr):
         return 0.25 / (np.log10(rr / 3.7 + 5.74 / (Re**0.9)) ** 2)
@@ -73,12 +99,63 @@ def _(mo):
 
 
 @app.cell
+def _(mo, np):
+    Q = 0.1
+    D = 0.2545
+    nu = 1.0e-6
+    eps = 0.046e-3   # acero comercial (m)
+    L = 100.0
+
+    A = np.pi * D**2 / 4
+    V = Q / A
+    Re_ex = V * D / nu
+    rr_ex = eps / D
+
+    if Re_ex < 2300:
+        regime = "Laminar"
+    elif Re_ex <= 4000:
+        regime = "Transición"
+    else:
+        regime = "Turbulento"
+
+    # Colebrook (Darcy) para el caso del ejercicio
+    fD = 0.25 / (np.log10(rr_ex / 3.7 + 5.74 / (Re_ex**0.9)) ** 2)
+    for _ in range(35):
+        inv = -2 * np.log10(rr_ex / 3.7 + 2.51 / (Re_ex * np.sqrt(fD)))
+        fD = 1 / (inv**2)
+
+    fF = fD / 4.0  # Fanning
+
+    # phi = 4*fF*(L/D)*(V^2/2)
+    phi = 4 * fF * (L / D) * (V**2 / 2)
+    hf = phi / 9.81
+
+    mo.md(
+        fr"""
+### Resultado del ejercicio
+
+- Área: **A = {A:.5f} m²**
+- Velocidad media: **V = {V:.3f} m/s**
+- Reynolds: **Re = {Re_ex:.2e}**
+- **Régimen: {regime}**
+
+**Segunda parte (usando Moody, acero comercial):**
+- Rugosidad relativa: **ε/D = {rr_ex:.2e}**
+- Factor de fricción de **Fanning**: **f = {fF:.4f}** (aprox.)
+- Factor de fricción de **Darcy** (referencia): **f_D = {fD:.4f}**
+- \(\phi = 4f\,(L/D)\,(V^2/2)\): **φ = {phi:.2f} m²/s²**
+- Equivalente en pérdida de carga: **h_f \approx {hf:.2f} m** (para L=100 m)
+
+Conclusión: para este caudal y diámetro, el flujo está en régimen **{regime.lower()}**.
+"""
+    )
+    return
+
+
+@app.cell
 def _(f_darcy, np, plt, re_manual, re_slider, rr_manual, rr_slider, use_manual):
     Re_grid = np.logspace(3, 8, 500)
-    rr_lines = np.array([
-        1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 2e-4,
-        5e-4, 1e-3, 2e-3, 5e-3, 1e-2, 2e-2, 3e-2, 5e-2,
-    ])
+    rr_lines = np.array([1e-5, 1e-4, 1e-3, 1e-2, 3e-2, 5e-2])
 
     Re0 = float(re_manual.value if use_manual.value else re_slider.value)
     rr0 = float(rr_manual.value if use_manual.value else rr_slider.value)
@@ -97,11 +174,11 @@ def _(f_darcy, np, plt, re_manual, re_slider, rr_manual, rr_slider, use_manual):
     ax.set_xscale("log")
     ax.set_xlim(1e3, 1e8)
 
-    y_min, y_max = 0.005, 0.1
+    y_min, y_max = 0.0, 0.1
     ax.set_ylim(y_min, y_max)
-    y_ticks = np.linspace(y_min, y_max, 10)
+    y_ticks = np.arange(0.0, 0.101, 0.01)
     ax.set_yticks(y_ticks)
-    ax.set_yticklabels([f"{t:.4f}" for t in y_ticks])
+    ax.set_yticklabels([f"{t:.2f}" for t in y_ticks])
 
     ax.grid(True, which="both", ls="--", alpha=0.3)
     ax.set_title("Diagrama de Moody", fontsize=18, fontweight="bold")
@@ -114,7 +191,7 @@ def _(f_darcy, np, plt, re_manual, re_slider, rr_manual, rr_slider, use_manual):
     m = (f_ticks_right >= y_min) & (f_ticks_right <= y_max)
     ax2.set_ylim(y_min, y_max)
     ax2.set_yticks(f_ticks_right[m])
-    ax2.set_yticklabels([f"{r:.6f}".rstrip("0").rstrip(".") for r in rr_lines[m]], fontsize=12)
+    ax2.set_yticklabels([f"{r:.1e}" for r in rr_lines[m]], fontsize=12)
     ax2.set_ylabel("Rugosidad relativa, ε/D", fontsize=14)
 
     f0 = float(f_darcy(np.array([Re0]), rr0)[0])

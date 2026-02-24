@@ -18,34 +18,39 @@ def _(mo):
         r"""
 # Diagrama de Moody interactivo (Marimo) — **Fanning**
 
-El gráfico usa **factor de fricción de Fanning** \(f_F\), no Darcy.
+El gráfico usa **factor de fricción de Fanning** ($f_F$), no Darcy.
 
 ## Ecuaciones usadas
 
-1) Número de Reynolds:
-\[
-Re = \frac{VD}{\nu}
-\]
+1) Número de Reynolds
 
-2) Régimen laminar (Fanning):
-\[
+$$
+Re = \frac{V D}{\nu}
+$$
+
+2) Régimen laminar (Fanning)
+
+$$
 f_F = \frac{16}{Re}
-\]
+$$
 
-3) Régimen turbulento (Colebrook-White en Darcy):
-\[
+3) Régimen turbulento (Colebrook-White en Darcy)
+
+$$
 \frac{1}{\sqrt{f_D}} = -2\log_{10}\left(\frac{\varepsilon/D}{3.7} + \frac{2.51}{Re\sqrt{f_D}}\right)
-\]
+$$
 
-y conversión a Fanning:
-\[
+Conversión a Fanning
+
+$$
 f_F = \frac{f_D}{4}
-\]
+$$
 
-4) Relación con pérdidas por fricción:
-\[
-\phi = 4f_F\left(\frac{L}{D}\right)\left(\frac{V^2}{2}\right)
-\]
+4) Relación con pérdidas por fricción
+
+$$
+\phi = 4 f_F \left(\frac{L}{D}\right)\left(\frac{V^2}{2}\right)
+$$
 """
     )
     return
@@ -121,9 +126,9 @@ def _(f_fanning, np, plt, re_manual, re_slider, rr_manual, rr_slider, use_manual
     ax.set_xscale("log")
     ax.set_xlim(1e3, 1e8)
 
-    y_min, y_max = 0.0, 0.1
+    y_min, y_max = 0.0, 0.03
     ax.set_ylim(y_min, y_max)
-    y_ticks = np.arange(0.0, 0.101, 0.01)
+    y_ticks = np.arange(0.0, 0.0301, 0.005)
     ax.set_yticks(y_ticks)
     ax.set_yticklabels([f"{t:.2f}" for t in y_ticks])
 

@@ -102,7 +102,7 @@ def _(colebrook_f, math):
     eps = 1.5e-6
 
     # Iteración parte (a)
-    n_iter = 10
+    n_iter = 5
     f_guess_a = 0.02
     rows_a = []
 
@@ -136,6 +136,8 @@ def _(D_min, L1, Q1, Re1, V1, f1, mo, rows_a):
         fr"""
 ## (a) Diámetro mínimo del ducto — iteración paso a paso
 
+En esta primera parte buscamos el diámetro mínimo del ducto que permita transportar el caudal especificado sin superar la pérdida de carga máxima. Para ello, se inicia con una suposición del factor de fricción, se calcula un diámetro candidato con Darcy-Weisbach, luego se obtiene la velocidad promedio y el número de Reynolds asociado, y finalmente se corrige el factor de fricción usando Colebrook-White. Este ciclo se repite de forma iterativa hasta estabilizar los valores, permitiendo observar claramente la convergencia entre la suposición inicial y el factor corregido.
+
 {chr(10).join(table_a)}
 
 **Valores convergidos (iteración {rows_a[-1][0]}):**
@@ -155,7 +157,7 @@ Interpretación: el ducto mínimo para cumplir $h_f\le 20\,\text{{m}}$ a $Q=0.35
 def _(D_min, Q1, colebrook_f, g, h, math, nu, eps):
     # Parte (b): L se duplica, D constante, h constante -> hallar Q2
     L2 = 300.0
-    n_iter_b = 10
+    n_iter_b = 5
     f_guess_b = 0.02
     rows_b = []
 
